@@ -111,6 +111,127 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         }
         return uriString;
     }
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    protected void openPipVideoDialog(String path, JSONObject options) {
+        // Let's create the main dialog
+        dialog = new Dialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
+        dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+        dialog.setOnDismissListener(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            dialog.getWindow().getInsetsController().hide(WindowInsets.Type.statusBars());
+        } else {
+            dialog.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
+        }
+
+        // Main container layout
+        LinearLayout main = new LinearLayout(cordova.getActivity());
+        main.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        main.setOrientation(LinearLayout.VERTICAL);
+        main.setHorizontalGravity(Gravity.CENTER_HORIZONTAL);
+        main.setVerticalGravity(Gravity.CENTER_VERTICAL);
+
+        VideoView videoView = new VideoView(cordova.getActivity());
+        videoView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        main.addView(videoView);
+
+        player = new MediaPlayer();
+        player.setOnPreparedListener(this);
+        player.setOnCompletionListener(this);
+        player.setOnErrorListener(this);
+
+        if (path.startsWith(ASSETS)) {
+            String f = path.substring(15);
+            AssetFileDescriptor fd;
+            try {
+                fd = cordova.getActivity().getAssets().openFd(f);
+                player.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+            } catch (Exception e) {
+                PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+                result.setKeepCallback(false); // release status callback in JS side
+                callbackContext.sendPluginResult(result);
+                callbackContext = null;
+                return;
+            }
+        } else {
+            try {
+                player.setDataSource(path);
+            } catch (Exception e) {
+                PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+                result.setKeepCallback(false); // release status callback in JS side
+                callbackContext.sendPluginResult(result);
+                callbackContext = null;
+                return;
+            }
+        }
+
+        try {
+            float volume = Float.parseFloat(options.getString("volume"));
+            Log.d(LOG_TAG, "setVolume: " + volume);
+            player.setVolume(volume, volume);
+        } catch (Exception e) {
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+            result.setKeepCallback(false); // release status callback in JS side
+            callbackContext.sendPluginResult(result);
+            callbackContext = null;
+            return;
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            try {
+                int scalingMode = options.getInt("scalingMode");
+                if (scalingMode == MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING) {
+                    Log.d(LOG_TAG, "setVideoScalingMode VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING");
+                    player.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
+                } else {
+                    Log.d(LOG_TAG, "setVideoScalingMode VIDEO_SCALING_MODE_SCALE_TO_FIT");
+                    player.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
+                }
+            } catch (Exception e) {
+                PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+                result.setKeepCallback(false); // release status callback in JS side
+                callbackContext.sendPluginResult(result);
+                callbackContext = null;
+                return;
+            }
+        }
+
+        final SurfaceHolder mHolder = videoView.getHolder();
+        mHolder.setKeepScreenOn(true);
+        mHolder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                player.setDisplay(holder);
+                try {
+                    player.prepare();
+                } catch (Exception e) {
+                    PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+                    result.setKeepCallback(false); // release status callback in JS side
+                    callbackContext.sendPluginResult(result);
+                    callbackContext = null;
+                }
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                player.release();
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            }
+        });
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
+
+        dialog.setContentView(main);
+        dialog.show();
+        dialog.getWindow().setAttributes(lp);    
+    }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     protected void openVideoDialog(String path, JSONObject options) {
