@@ -70,7 +70,13 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
             final String path = stripFileProtocol(fileUriStr);
 
             // Create dialog in new thread
-            cordova.getActivity().runOnUiThread(() -> openVideoDialog(path, options));
+            // check mode of display
+            string mode = options.getString("mode");
+            if (mode.equals("overlay")) {
+                cordova.getActivity().runOnUiThread(() -> openOverlayVideoDialog(path, options));
+            } else {
+                cordova.getActivity().runOnUiThread(() -> openVideoDialog(path, options));
+            }
 
             // Don't return any result now
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
@@ -112,7 +118,7 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         return uriString;
     }
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    protected void openPipVideoDialog(String path, JSONObject options) {
+    protected void openOverlayVideoDialog(String path, JSONObject options) {
         // Let's create the main dialog
         dialog = new Dialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
         dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
@@ -124,7 +130,7 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         } else {
             dialog.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
         }
-
+        
         // Main container layout
         LinearLayout main = new LinearLayout(cordova.getActivity());
         main.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
