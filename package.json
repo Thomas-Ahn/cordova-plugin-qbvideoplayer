@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/moust/cordova-plugin-videoplayer.git"
+    "url": "git+https://github.com/Thomas-Ahn/cordova-plugin-videoplayer.git"
   },
   "keywords": [
     "ecosystem:cordova",
@@ -31,10 +31,10 @@
     "player",
     "fullscreen"
   ],
-  "author": "Quentin Aupetit",
+  "author": "Thomas Ahn",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/moust/cordova-plugin-videoplayer/issues"
+    "url": "https://github.com/Thomas-Ahn/cordova-plugin-videoplayer/issues"
   },
-  "homepage": "https://github.com/moust/cordova-plugin-videoplayer#readme"
+  "homepage": "https://github.com/Thomas-Ahn/cordova-plugin-videoplayer#readme"
 }
