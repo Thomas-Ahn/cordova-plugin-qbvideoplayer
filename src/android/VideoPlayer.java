@@ -71,8 +71,7 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
 
             // Create dialog in new thread
             // check mode of display
-            string mode = options.getString("mode");
-            if (mode.equals("overlay")) {
+            if (options.getString("mode").equals("overlay")) {
                 cordova.getActivity().runOnUiThread(() -> openOverlayVideoDialog(path, options));
             } else {
                 cordova.getActivity().runOnUiThread(() -> openVideoDialog(path, options));
